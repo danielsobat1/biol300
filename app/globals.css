@@ -16,9 +16,9 @@ html { zoom: 1.2; }
 }
 
 [data-theme="light"] {
-  --bg:          #f5f2eb;
-  --surface:     #ffffff;
-  --surface-mid: #ece8df;
+  --bg:          #dce8f5;
+  --surface:     #eef4fb;
+  --surface-mid: #c8ddf0;
   --gold:        #8b5e00;
   --gold-light:  #a07000;
   --gold-rgb:    139, 94, 0;
