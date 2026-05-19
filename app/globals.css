@@ -16,14 +16,24 @@ html { zoom: 1.2; }
 }
 
 [data-theme="light"] {
-  --bg:          #e8f4fb;   /* very light UBC blue tint */
-  --surface:     #ffffff;   /* white for nav / sections */
-  --surface-mid: #d4ebf7;   /* soft UBC blue for cards / dropdowns */
-  --gold:        #8b5e00;   /* darkened gold for contrast on light */
+  --bg:          #f0f8ff;   /* clean near-white with UBC blue tint */
+  --surface:     #ffffff;   /* white for content sections / cards */
+  --surface-mid: #daeef9;   /* light UBC blue for dropdowns / inputs */
+  --gold:        #8b5e00;   /* darkened gold for contrast on light bg */
   --gold-light:  #a07000;
   --gold-rgb:    139, 94, 0;
-  --text-rgb:    0, 33, 69; /* UBC Blue (#002145) as RGB */
-  --text:        #002145;   /* UBC Blue for body text */
+  --text-rgb:    0, 33, 69;
+  --text:        #002145;
+}
+
+/* Nav header stays dark UBC navy with light text in both themes */
+[data-theme="light"] header {
+  background: #002145 !important;
+  --text-rgb:   255, 255, 255;
+  --text:       #ffffff;
+  --gold:       #c6973f;
+  --gold-light: #e8c27a;
+  --gold-rgb:   198, 151, 63;
 }
 
 body {
