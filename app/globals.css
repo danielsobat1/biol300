@@ -16,14 +16,14 @@ html { zoom: 1.2; }
 }
 
 [data-theme="light"] {
-  --bg:          #dce8f5;
-  --surface:     #eef4fb;
-  --surface-mid: #c8ddf0;
-  --gold:        #8b5e00;
+  --bg:          #97D4E9;   /* UBC PMS 2975 — lightest official blue */
+  --surface:     #6EC4E8;   /* UBC PMS 297 */
+  --surface-mid: #ffffff;   /* white for cards / dropdowns */
+  --gold:        #8b5e00;   /* darkened gold for contrast on light bg */
   --gold-light:  #a07000;
   --gold-rgb:    139, 94, 0;
-  --text-rgb:    0, 24, 48;
-  --text:        #001830;
+  --text-rgb:    0, 33, 69; /* UBC Blue (#002145) as RGB */
+  --text:        #002145;   /* UBC Blue for body text */
 }
 
 body {
