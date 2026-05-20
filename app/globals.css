@@ -4,36 +4,70 @@
 
 html { zoom: 1.2; }
 
+/* ─── LIGHT THEME (default) ──────────────────────────────── */
 :root {
+  --bg:          #f0f4f8;
+  --surface:     #ffffff;
+  --surface-mid: #e8eef5;
+  --gold:        #0680a6;
+  --gold-light:  #40a0bd;
+  --gold-rgb:    6, 128, 166;
+  --text-rgb:    0, 33, 69;
+  --text:        #002145;
+
+  /* Flowchart node colours — light */
+  --node-decision-border: rgba(0,85,183,0.35);
+  --node-decision-bg:     rgba(0,85,183,0.06);
+  --node-decision-text:   #0055b7;
+  --node-decision-label:  rgba(0,85,183,0.55);
+
+  --node-check-border:    rgba(112,48,192,0.35);
+  --node-check-bg:        rgba(112,48,192,0.06);
+  --node-check-text:      #7030c0;
+  --node-check-label:     rgba(112,48,192,0.55);
+
+  --node-transform-border: rgba(160,100,0,0.35);
+  --node-transform-bg:     rgba(160,100,0,0.06);
+  --node-transform-text:   #9a6400;
+  --node-transform-label:  rgba(160,100,0,0.55);
+}
+
+/* ─── DARK THEME ─────────────────────────────────────────── */
+[data-theme="dark"] {
   --bg:          #001830;
   --surface:     #002145;
   --surface-mid: #00274d;
-  --gold:        #c6973f;
-  --gold-light:  #e8c27a;
-  --gold-rgb:    198, 151, 63;
+  --gold:        #5ab3cc;
+  --gold-light:  #7ec8da;
+  --gold-rgb:    90, 179, 204;
   --text-rgb:    255, 255, 255;
   --text:        #ffffff;
+
+  /* Flowchart node colours — dark */
+  --node-decision-border: rgba(99,164,255,0.42);
+  --node-decision-bg:     rgba(50,110,210,0.12);
+  --node-decision-text:   #8ec2ff;
+  --node-decision-label:  rgba(109,163,255,0.65);
+
+  --node-check-border:    rgba(180,110,220,0.42);
+  --node-check-bg:        rgba(130,75,195,0.10);
+  --node-check-text:      #c07ef0;
+  --node-check-label:     rgba(192,126,240,0.65);
+
+  --node-transform-border: rgba(255,185,60,0.42);
+  --node-transform-bg:     rgba(215,140,25,0.09);
+  --node-transform-text:   #f0b855;
+  --node-transform-label:  rgba(240,184,85,0.65);
 }
 
-[data-theme="light"] {
-  --bg:          #f0f8ff;   /* clean near-white with UBC blue tint */
-  --surface:     #ffffff;   /* white for content sections / cards */
-  --surface-mid: #daeef9;   /* light UBC blue for dropdowns / inputs */
-  --gold:        #8b5e00;   /* darkened gold for contrast on light bg */
-  --gold-light:  #a07000;
-  --gold-rgb:    139, 94, 0;
-  --text-rgb:    0, 33, 69;
-  --text:        #002145;
-}
-
-/* Nav header stays dark UBC navy with light text in both themes */
-[data-theme="light"] header {
+/* ─── NAV: always dark UBC navy with white text ───────────── */
+header {
   background: #002145 !important;
   --text-rgb:   255, 255, 255;
   --text:       #ffffff;
-  --gold:       #c6973f;
-  --gold-light: #e8c27a;
-  --gold-rgb:   198, 151, 63;
+  --gold:       #5ab3cc;
+  --gold-light: #7ec8da;
+  --gold-rgb:   90, 179, 204;
 }
 
 body {

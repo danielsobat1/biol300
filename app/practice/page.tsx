@@ -54,42 +54,19 @@ const BLUE = "var(--surface)";
 const BLUE_DARK = "var(--bg)";
 const BLUE_MID = "var(--surface-mid)";
 
-// ─── FLOATING SYMBOLS ──────────────────────────────────────────────────────────
+// ─── INLINE MATH RENDERER ────────────────────────────────────────────────────────
 
-const SYMBOLS = ["Σ", "χ²", "μ", "σ", "H₀", "Hₐ", "α", "β", "ρ", "r²", "F", "t", "p", "df", "SE"];
-
-function FloatingSymbols() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    let iv: ReturnType<typeof setInterval>;
-    function spawn() {
-      if (!el) return;
-      const s = document.createElement("span");
-      const dur = 22 + Math.random() * 20;
-      const delay = Math.random() * 2;
-      s.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-      s.style.cssText = [
-        "position:absolute",
-        `font-size:${13 + Math.random() * 22}px`,
-        `left:${Math.random() * 100}%`,
-        "bottom:-30px",
-        "color:rgba(var(--gold-rgb),0.08)",
-        "font-family:ui-serif,Georgia,serif",
-        "user-select:none",
-        "pointer-events:none",
-        `animation:symRise ${dur}s ${delay}s linear forwards`,
-      ].join(";");
-      el.appendChild(s);
-      timers.push(setTimeout(() => s.remove(), (dur + delay + 1) * 1000));
+function renderInlineMath(text: string): string {
+  return text.split(/\$([^$]+)\$/g).map((part, i) => {
+    if (i % 2 === 1) {
+      try { return katex.renderToString(part, { throwOnError: false, displayMode: false }); }
+      catch { return part; }
     }
-    for (let i = 0; i < 8; i++) timers.push(setTimeout(spawn, i * 600));
-    iv = setInterval(spawn, 2200);
-    return () => { clearInterval(iv); timers.forEach(clearTimeout); };
-  }, []);
-  return <div ref={ref} style={{ position: "fixed", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }} aria-hidden />;
+    return part
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.+?)\*/g, "<em>$1</em>");
+  }).join("");
 }
 
 // ─── TABLE RENDERER ─────────────────────────────────────────────────────────────
@@ -133,14 +110,16 @@ function Block({ b }: { b: AnswerBlock }) {
       if (b.text.includes("|") && b.text.includes("\n")) return <TableFromText text={b.text} />;
       if (/^[\d., ()-]+$/.test(b.text.trim()) && b.text.includes(","))
         return <p style={{ fontFamily: "ui-monospace,monospace", fontSize: 12, color: GOLD_LIGHT, background: "rgba(var(--gold-rgb),0.07)", borderRadius: 8, padding: "10px 14px", margin: "8px 0", lineHeight: 1.7, wordBreak: "break-all" }}>{b.text}</p>;
-      return <p style={{ fontSize: 13, color: "rgba(var(--text-rgb),0.6)", lineHeight: 1.65, margin: "5px 0", whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: esc(b.text) }} />;
+      return <p style={{ fontSize: 13, color: "rgba(var(--text-rgb),0.6)", lineHeight: 1.65, margin: "5px 0", whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: renderInlineMath(b.text) }} />;
 
     case "formula":
       return (
         <div style={{ margin: "10px 0", borderRadius: 10, border: "1px solid rgba(var(--gold-rgb),0.25)", background: "rgba(var(--gold-rgb),0.07)", padding: "12px 16px" }}>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: GOLD, marginBottom: 4, opacity: 0.7 }}>{b.label}</div>
-          <div style={{ fontFamily: "ui-monospace,monospace", fontSize: 12, color: "rgba(var(--text-rgb),0.7)" }}>{b.formula}</div>
-          <div style={{ fontFamily: "ui-monospace,monospace", fontSize: 15, fontWeight: 700, color: GOLD_LIGHT, marginTop: 4 }}>= {b.result}</div>
+          <div style={{ fontSize: 13, color: "rgba(var(--text-rgb),0.7)" }}
+            dangerouslySetInnerHTML={{ __html: renderInlineMath(b.formula) }} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: GOLD_LIGHT, marginTop: 6 }}
+        dangerouslySetInnerHTML={{ __html: renderInlineMath(b.result) }} />
         </div>
       );
 
@@ -158,14 +137,18 @@ function Block({ b }: { b: AnswerBlock }) {
       return (
         <div style={{ marginTop: 16, borderRadius: 10, border: "1px solid rgba(var(--gold-rgb),0.19)", background: "rgba(var(--gold-rgb),0.07)", padding: "14px 16px" }}>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: GOLD, opacity: 0.7, marginBottom: 6 }}>Conclusion</div>
-          <p style={{ fontSize: 13, color: "rgba(var(--text-rgb),0.85)", lineHeight: 1.65, margin: 0 }}>{b.text}</p>
+          <p style={{ fontSize: 13, color: "rgba(var(--text-rgb),0.85)", lineHeight: 1.65, margin: 0 }}
+            dangerouslySetInnerHTML={{ __html: renderInlineMath(b.text) }} />
         </div>
       );
 
     case "list":
       return (
         <ul style={{ margin: "6px 0 6px 4px", paddingLeft: 18 }}>
-          {b.items.map((item, i) => <li key={i} style={{ fontSize: 13, color: "rgba(var(--text-rgb),0.6)", lineHeight: 1.65, listStyleType: "disc" }}>{item}</li>)}
+          {b.items.map((item, i) => (
+            <li key={i} style={{ fontSize: 13, color: "rgba(var(--text-rgb),0.6)", lineHeight: 1.85, listStyleType: "disc" }}
+              dangerouslySetInnerHTML={{ __html: renderInlineMath(item) }} />
+          ))}
         </ul>
       );
 
@@ -223,13 +206,13 @@ function ChapterSelect({ value, onChange }: { value: number; onChange: (v: numbe
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "10px 14px", borderRadius: 10, border: `1px solid ${open ? "rgba(var(--gold-rgb),0.5)" : "rgba(var(--gold-rgb),0.2)"}`, background: BLUE_MID, color: "var(--text)", fontSize: 13, cursor: "pointer", textAlign: "left" }}
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "10px 14px", borderRadius: 10, border: `1px solid ${open ? "rgba(var(--gold-rgb),0.5)" : "rgba(var(--text-rgb),0.12)"}`, background: "var(--surface)", color: "var(--text)", fontSize: 13, cursor: "pointer", textAlign: "left" }}
       >
         <span style={{ color: "rgba(var(--text-rgb),0.85)" }}>{selected?.label}</span>
         <span style={{ color: GOLD, fontSize: 10, flexShrink: 0 }}>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div style={{ position: "absolute", ...(openAbove ? { bottom: "calc(100% + 6px)" } : { top: "calc(100% + 6px)" }), left: 0, right: 0, background: "#00274d", border: "1px solid rgba(var(--gold-rgb),0.25)", borderRadius: 10, overflow: "hidden", zIndex: 100, boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
+        <div style={{ position: "absolute", ...(openAbove ? { bottom: "calc(100% + 6px)" } : { top: "calc(100% + 6px)" }), left: 0, right: 0, background: "var(--surface)", border: "1px solid rgba(var(--text-rgb),0.12)", borderRadius: 10, overflow: "hidden", zIndex: 100, boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
           <div ref={listRef} style={{ maxHeight: 360, overflowY: "auto" }}>
             {CHAPTER_OPTIONS.map(o => (
               <button
@@ -283,14 +266,14 @@ function FormulaCardSmall({ f }: { f: Formula }) {
         </span>
       </div>
       <div
-        style={{ color: hovered ? "#e8c27a" : "rgba(var(--text-rgb),0.8)", fontSize: "0.8em", overflowX: "auto", transition: "color 0.18s ease" }}
+        style={{ color: hovered ? "var(--gold-light)" : "rgba(var(--text-rgb),0.8)", fontSize: "0.8em", overflowX: "auto", transition: "color 0.18s ease" }}
         dangerouslySetInnerHTML={{ __html: katex.renderToString(f.latex, { throwOnError: false, displayMode: false }) }}
       />
       <div style={{ maxHeight: hovered ? "200px" : "0px", opacity: hovered ? 1 : 0, overflow: "hidden", transition: "max-height 0.28s cubic-bezier(0.16,1,0.3,1), opacity 0.22s ease" }}>
         <div style={{ borderTop: "1px solid rgba(var(--gold-rgb),0.15)", marginTop: 10, paddingTop: 10 }}>
           <p style={{ fontSize: 11, color: "rgba(var(--text-rgb),0.65)", lineHeight: 1.6, margin: "0 0 8px" }}>{f.explanation}</p>
           <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
-            <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#c6973f", opacity: 0.7, flexShrink: 0, marginTop: 2 }}>When</span>
+            <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--gold)", opacity: 0.7, flexShrink: 0, marginTop: 2 }}>When</span>
             <p style={{ fontSize: 10, color: "rgba(var(--text-rgb),0.38)", lineHeight: 1.55, margin: 0 }}>{f.when}</p>
           </div>
         </div>
@@ -315,8 +298,8 @@ function FormulaPanel({ open, onClose }: { open: boolean; onClose: () => void })
         }}
       />
 
-      {/* Panel */}
-      <div style={{
+      {/* Panel — always dark regardless of page theme */}
+      <div data-theme="dark" style={{
         position: "fixed", top: 0, right: 0, bottom: 0, width: 400,
         background: "#001e3c",
         borderLeft: "1px solid rgba(var(--gold-rgb),0.25)",
@@ -329,7 +312,7 @@ function FormulaPanel({ open, onClose }: { open: boolean; onClose: () => void })
         {/* Panel header */}
         <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(var(--gold-rgb),0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 3, height: 16, borderRadius: 2, background: "#c6973f", flexShrink: 0 }} />
+            <div style={{ width: 3, height: 16, borderRadius: 2, background: "var(--gold)", flexShrink: 0 }} />
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.01em" }}>Formula Sheet</span>
           </div>
           <button
@@ -343,12 +326,12 @@ function FormulaPanel({ open, onClose }: { open: boolean; onClose: () => void })
         {/* Section filter */}
         <div style={{ padding: "12px 20px", borderBottom: "1px solid rgba(var(--text-rgb),0.05)", display: "flex", flexWrap: "wrap", gap: 6, flexShrink: 0 }}>
           <button type="button" onClick={() => setActiveSection(null)}
-            style={{ padding: "3px 10px", borderRadius: 100, fontSize: 10, fontWeight: 600, cursor: "pointer", border: `1px solid ${!activeSection ? "rgba(var(--gold-rgb),0.6)" : "rgba(var(--text-rgb),0.1)"}`, background: !activeSection ? "rgba(var(--gold-rgb),0.14)" : "transparent", color: !activeSection ? "#e8c27a" : "rgba(var(--text-rgb),0.4)" }}>
+            style={{ padding: "3px 10px", borderRadius: 100, fontSize: 10, fontWeight: 600, cursor: "pointer", border: `1px solid ${!activeSection ? "rgba(var(--gold-rgb),0.6)" : "rgba(var(--text-rgb),0.1)"}`, background: !activeSection ? "rgba(var(--gold-rgb),0.14)" : "transparent", color: !activeSection ? "var(--gold-light)" : "rgba(var(--text-rgb),0.4)" }}>
             All
           </button>
           {SECTIONS.map(s => (
             <button key={s.id} type="button" onClick={() => setActiveSection(activeSection === s.id ? null : s.id)}
-              style={{ padding: "3px 10px", borderRadius: 100, fontSize: 10, fontWeight: 600, cursor: "pointer", border: `1px solid ${activeSection === s.id ? "rgba(var(--gold-rgb),0.6)" : "rgba(var(--text-rgb),0.1)"}`, background: activeSection === s.id ? "rgba(var(--gold-rgb),0.14)" : "transparent", color: activeSection === s.id ? "#e8c27a" : "rgba(var(--text-rgb),0.4)" }}>
+              style={{ padding: "3px 10px", borderRadius: 100, fontSize: 10, fontWeight: 600, cursor: "pointer", border: `1px solid ${activeSection === s.id ? "rgba(var(--gold-rgb),0.6)" : "rgba(var(--text-rgb),0.1)"}`, background: activeSection === s.id ? "rgba(var(--gold-rgb),0.14)" : "transparent", color: activeSection === s.id ? "var(--gold-light)" : "rgba(var(--text-rgb),0.4)" }}>
               {s.title}
             </button>
           ))}
@@ -376,7 +359,7 @@ function FormulaPanel({ open, onClose }: { open: boolean; onClose: () => void })
 
         {/* Footer link */}
         <div style={{ padding: "12px 20px", borderTop: "1px solid rgba(var(--text-rgb),0.05)", flexShrink: 0 }}>
-          <Link href="/formula-sheet" target="_blank" style={{ fontSize: 11, color: "#c6973f", textDecoration: "none", opacity: 0.7 }}>
+          <Link href="/formula-sheet" target="_blank" style={{ fontSize: 11, color: "var(--gold)", textDecoration: "none", opacity: 0.7 }}>
             Open full formula sheet →
           </Link>
         </div>
@@ -487,17 +470,11 @@ export default function PracticePage() {
 
   const filterLabel = isAllPreset ? "All tests" : isCalcPreset ? "Calculable only" : isIdPreset ? "Identify only" : `${selectedTests.size} tests`;
 
-  const card: React.CSSProperties = { background: "rgba(var(--text-rgb),0.04)", border: "1px solid rgba(var(--gold-rgb),0.18)", borderRadius: 14, padding: 24, position: "relative" };
+  const card: React.CSSProperties = { background: "var(--surface)", border: "1px solid rgba(var(--text-rgb),0.08)", borderLeft: "3px solid var(--gold)", borderRadius: 10, padding: 24, position: "relative", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" };
 
   return (
     <>
       <style>{`
-        @keyframes symRise {
-          from { transform: translateY(0) rotate(0deg); opacity: 0; }
-          5%   { opacity: 1; }
-          95%  { opacity: 1; }
-          to   { transform: translateY(-110vh) rotate(15deg); opacity: 0; }
-        }
         .chip-btn { transition: background 0.15s, border-color 0.15s, color 0.15s; }
         .quick-btn { transition: background 0.15s, border-color 0.15s, color 0.15s; }
         .quick-btn:hover { border-color: rgba(var(--gold-rgb),0.5) !important; color: rgba(var(--text-rgb),0.9) !important; }
@@ -509,8 +486,7 @@ export default function PracticePage() {
         .new-btn:hover { background: rgba(var(--text-rgb),0.08) !important; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: BLUE_DARK, position: "relative" }}>
-        <FloatingSymbols />
+      <div style={{ minHeight: "100vh", background: BLUE_DARK }}>
 
         {/* Nav */}
         <header style={{ background: BLUE, borderBottom: "1px solid rgba(var(--gold-rgb),0.18)", position: "sticky", top: 0, zIndex: 50 }}>
@@ -523,7 +499,7 @@ export default function PracticePage() {
             </div>
             <button
               onClick={() => setFormulaOpen(o => !o)}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 14px", borderRadius: 8, border: `1px solid ${formulaOpen ? "rgba(var(--gold-rgb),0.5)" : "rgba(var(--gold-rgb),0.22)"}`, background: formulaOpen ? "rgba(var(--gold-rgb),0.14)" : "transparent", color: formulaOpen ? "#e8c27a" : "rgba(var(--gold-rgb),0.6)", fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease" }}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 14px", borderRadius: 8, border: `1px solid ${formulaOpen ? "rgba(var(--gold-rgb),0.5)" : "rgba(var(--gold-rgb),0.22)"}`, background: formulaOpen ? "rgba(var(--gold-rgb),0.14)" : "transparent", color: formulaOpen ? "var(--gold-light)" : "rgba(var(--gold-rgb),0.6)", fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s ease" }}
             >
               Formulas
             </button>
@@ -532,7 +508,7 @@ export default function PracticePage() {
 
         <FormulaPanel open={formulaOpen} onClose={() => setFormulaOpen(false)} />
 
-        <main style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px 64px", position: "relative", zIndex: 1 }}>
+        <main style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px 64px" }}>
 
           {/* Heading */}
           <div style={{ marginBottom: 28 }}>
